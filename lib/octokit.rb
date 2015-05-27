@@ -170,24 +170,29 @@ module Octokit
         time = issue[@params.fetch(:group_by, :updated_at).to_sym]
         time - time.sec - time.min.minutes - time.hour.hours
       end
-      Hash[issues.map{|time,data| [time, data.count]}]
+      issues = issues.map{|time,data| [time, data.count]}
+      issues = issues.map do |issue|
+        count = issues.select{|item| item[0] <= issue[0]}.map(&:last).sum
+        [issue[0], count]
+      end
+      Hash[issues]
     end
 
     def open_issues_weekly
       weekly = open_issues_daily.group_by{|time, count| time - time.wday.days}
-      Hash[weekly.map{|t,d| [t, d.count]}]
+      Hash[weekly.map{|t,d| [t + 1.week, d.max_by{|a| a[0]}.last]}]
     end
 
     def open_issues_monthly
       monthly = open_issues_daily.group_by{|time, count| time - time.day.days}
-      Hash[monthly.map{|t,d| [t, d.count]}]
+      Hash[monthly.map{|t,d| [t + 1.month, d.max_by{|a| a[0]}.last]}]
     end
 
     def open_issues_yearly
       yearly = open_issues_daily.group_by do |time, count|
         time - (time.day-1).days - (time.month-1).months
       end
-      Hash[yearly.map{|t,d| [t, d.count]}]
+      Hash[yearly.map{|t,d| [t + 1.year, d.max_by{|a| a[0]}.last]}]
     end
 
     def closed_issues_daily
@@ -196,24 +201,29 @@ module Octokit
         time = issue[@params.fetch(:group_by, :updated_at).to_sym]
         time - time.sec - time.min.minutes - time.hour.hours
       end
-      Hash[issues.map{|time,data| [time, data.count]}]
+      issues = issues.map{|time,data| [time, data.count]}
+      issues = issues.map do |issue|
+        count = issues.select{|item| item[0] <= issue[0]}.map(&:last).sum
+        [issue[0], count]
+      end
+      Hash[issues]
     end
 
     def closed_issues_weekly
       weekly = closed_issues_daily.group_by{|time, count| time - time.wday.days}
-      Hash[weekly.map{|t,d| [t, d.count]}]
+      Hash[weekly.map{|t,d| [t + 1.week, d.max_by{|a| a[0]}.last]}]
     end
 
     def closed_issues_monthly
       monthly = closed_issues_daily.group_by{|time, count| time - time.day.days}
-      Hash[monthly.map{|t,d| [t, d.count]}]
+      Hash[monthly.map{|t,d| [t + 1.month, d.max_by{|a| a[0]}.last]}]
     end
 
     def closed_issues_yearly
       yearly = closed_issues_daily.group_by do |time, count|
         time - (time.day-1).days - (time.month-1).months
       end
-      Hash[yearly.map{|t,d| [t, d.count]}]
+      Hash[yearly.map{|t,d| [t + 1.year, d.max_by{|a| a[0]}.last]}]
     end
 
     def repos_list
