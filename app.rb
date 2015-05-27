@@ -31,10 +31,14 @@ helpers do
     hash[resource.to_sym]
   end
 
-  def list_mapping_for(resource)
+  def lists_mapping_for(resource)
     available = %w[open_issues closed_issues gists repos]
     available = available & [resource.to_s]
     available.any? ? :list : nil
+  end
+
+  def charts_mapping_for(resource)
+    :chart
   end
 end
 
@@ -43,33 +47,23 @@ get '/' do
   markdown :root, layout: :layout, layout_engine: :erb
 end
 
-get '/stats/:stats/list/:list' do
-  list = params["list"].split(",")
-  stat = params["stats"].split(",")
-  data = {stats: {}, lists: {}}
-  stat.each{|item| data[:stats][item.to_sym] = query(item, :stats, false) }
-  list.each{|item| data[:lists][item.to_sym] = query(item, :list, false) }
+get '/charts/:charts/stats/:stats/lists/:lists' do
+  lists  = params["lists"].split(",")
+  stats  = params["stats"].split(",")
+  charts = params["charts"].split(",")
+  data = {stats: {}, lists: {}, charts: {}}
+  stats.each{ |item| data[:stats][item.to_sym]  = query(item, :stats, false) }
+  lists.each{ |item| data[:lists][item.to_sym]  = query(item, :lists, false) }
+  charts.each{|item| data[:charts][item.to_sym] = query(item, :charts, false) }
   data.to_json
 end
 
-get '/stats/issues' do
-  { open: query(:open_issues), closed: query(:closed_issues)}
-end
-
-get '/stats/:resource' do
+get '/:type/:resource' do
   resource = params["resource"].split(",")
+  type     = params["type"].to_sym
   if resource.count > 1
-    Hash[resource.map{|r| [r, query(r, :stats, false)]}].to_json
+    Hash[resource.map{|r| [r, query(r, type, false)]}].to_json
   else
-    query resource.first, :stats
-  end
-end
-
-get '/list/:resource' do
-  resource = params["resource"].split(",")
-  if resource.count > 1
-    Hash[resource.map{|r| [r, query(r, :list, false)]}].to_json
-  else
-    query resource.first, :list
+    query resource.first, type
   end
 end

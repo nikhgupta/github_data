@@ -44,23 +44,17 @@ module Octokit
 
     def issues_all
       return @issues if @issues
-      @issues = repos_all.map do |repo|
-        @client.issues(repo.full_name, state: "all").map do |issue|
-          issue.repo = repo
-          issue.to_hash_without_urls
-        end
-      end.flatten(1)
+      issues = @client.user_issues(state: "all", filter: "all")
+      issues = issues.map(&:to_hash_without_urls)
+      @issues = issues
     end
 
     def open_issues_all
-      return @open_issues if @open_issues
-      repos = repos_all.select{|repo| repo.open_issues_count > 0}
-      @open_issues = repos.map do |repo|
-        @client.issues(repo.full_name).map do |issue|
-          issue.repo = repo
-          issue.to_hash_without_urls
-        end
-      end.flatten(1)
+      issues_all.select{|issue| issue[:state] == "open"}
+    end
+
+    def closed_issues_all
+      issues_all.select{|issue| issue[:state] == "open"}
     end
 
     def contributions_all
@@ -74,6 +68,8 @@ module Octokit
       end
       @contributions = Hash[contributions]
     end
+
+    ### STATS #########################################################
 
     alias :contributions_daily :contributions_all
 
@@ -164,9 +160,7 @@ module Octokit
     end
 
     def open_issues_daily
-      issues = @issues ? issues_all : open_issues_all
-      issues = issues.select{|issue| issue[:state] == "open"}
-      issues = issues.group_by do |issue|
+      issues = open_issues_all.group_by do |issue|
         time = issue[@params.fetch(:group_by, :updated_at).to_sym]
         time - time.sec - time.min.minutes - time.hour.hours
       end
@@ -196,8 +190,7 @@ module Octokit
     end
 
     def closed_issues_daily
-      issues = issues_all.select{|issue| issue[:state] == "closed"}
-      issues = issues.group_by do |issue|
+      issues = closed_issues_all.group_by do |issue|
         time = issue[@params.fetch(:group_by, :updated_at).to_sym]
         time - time.sec - time.min.minutes - time.hour.hours
       end
@@ -226,6 +219,8 @@ module Octokit
       Hash[yearly.map{|t,d| [t + 1.year, d.max_by{|a| a[0]}.last]}]
     end
 
+    ### LISTS #########################################################
+
     def repos_list
       sort_by = @params.fetch(:sort_by, :updated_at)
       repos_all.map(&:to_hash_without_urls).sort_by{|repo| repo[sort_by]}
@@ -237,20 +232,39 @@ module Octokit
     end
 
     def open_issues_list
-      issues  = @issues ? issues_all : open_issues_all
       sort_by = @params.fetch(:sort_by, :updated_at)
-      issues.sort_by{|issue| issue[sort_by]}
+      open_issues_all.sort_by{|issue| issue[sort_by]}
     end
 
     def closed_issues_list
-      issues = issues_all.select{|issue| issue[:state] == "closed"}
       sort_by = @params.fetch(:sort_by, :updated_at)
-      issues.sort_by{|issue| issue[sort_by]}
+      closed_issues_all.sort_by{|issue| issue[sort_by]}
     end
 
     def issues_list
       sort_by = @params.fetch(:sort_by, :updated_at)
       issues_all.sort_by{|issue| issue[sort_by]}
+    end
+
+    ### CHARTS ########################################################
+
+    def issues_burnout_chart
+      data, consolidated = {}, {}
+      issues_all.each do |issue|
+        closed_at = issue[:closed_at]  ? issue[:closed_at].to_date  : nil
+        opened_at = issue[:created_at] ? issue[:created_at].to_date : nil
+        if closed_at
+          data[closed_at] ||= 0
+          data[closed_at]  -= 1
+        end
+        data[opened_at] ||= 0
+        data[opened_at]  += 1
+      end
+      (data.keys.min..Date.today).each do |day|
+        burnout = data.select{|d2,b2| d2 <= day}.map(&:last).sum
+        consolidated[day.to_time.to_i*1000] = burnout
+      end
+      consolidated.to_a.sort_by(&:first)
     end
 
     private
