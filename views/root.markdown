@@ -1,4 +1,12 @@
-## Available Methods
+## Available Methods :: Miscelleneous
+
+- __IP Address and Environment__: returns the remote ip address as well
+  as other environment variables for the current request.
+
+        GET /ip                # json data
+        GET /ip?format=plain   # plain text data
+
+## Available Methods :: Github
 
 All of the following methods expect a `user` (Github user to query data
 for) and `token` (Github token for API authentication) parameter in the
@@ -9,7 +17,7 @@ for) and `token` (Github token for API authentication) parameter in the
 - __Issues Burnout__: returns issues pending per day (cumulative) for
   the given user (uses filter: `all` from the API).
 
-        GET /charts/issues_burnout
+        GET /github/charts/issues_burnout
 
 ### Statistics
 
@@ -19,26 +27,26 @@ for) and `token` (Github token for API authentication) parameter in the
   Data is scraped by requesting:
   `http://github.com/users/<user>/contributions`
 
-        GET /stats/contributions
+        GET /github/stats/contributions
 
 - __Gists__: returns gists updated in the last week, month and the year
   by the user, as well as since the beginning grouped by `updated_at`.
   A different grouping method can be requested by adding `&group_by=`
   parameter.
 
-        GET /stats/gists
+        GET /github/stats/gists
 
 - __Repos__: returns repositories grouped by `pushed_at` field in
   a daily, monthly, weekly and yearly graph data form. A different
   grouping method can be requested by adding `&group_by` parameter.
 
-        GET /stats/repos
+        GET /github/stats/repos
 
 - __Open Issues__: returns open issues grouped by `updated_at` field in 
   a daily, monthly, weekly and yearly graph data form. A different
   grouping method can be requested by adding `&group_by` parameter.
 
-        GET /stats/open_issues
+        GET /github/stats/open_issues
 
 - __Issues__: returns open and closed issues grouped by `updated_at`
   field in a daily, monthly, weekly and yearly graph data form.
@@ -46,28 +54,28 @@ for) and `token` (Github token for API authentication) parameter in the
   parameter. Note that this method is really expensive, and should only
   be called when required.
 
-        GET /stats/issues
+        GET /github/stats/issues
 
 ### Listing
 
 - __Repos__: returns list of repos for the given user.
 
-        GET /lists/repos
+        GET /github/lists/repos
 
 - __Gists__: returns list of gists for the given user.
 
-        GET /lists/gists
+        GET /github/lists/gists
 
 - __Open Issues__: returns list of open issues for the given user across
   all repositories.
 
-        GET /lists/open_issues
+        GET /github/lists/open_issues
 
 ### Combined method
 
 You can request all the data that you need in a single request to this server by using the following method. Provide a comma separated list of methods that you need to access to this method.
 
-        GET /charts/issues_burnout/stats/gists,contributions/lists/repos?user=<user>&token=<token>
+        GET /github/charts/issues_burnout/stats/gists,contributions/lists/repos?user=<user>&token=<token>
 
 The above request will provide statistics for the gists, open issues, repos and contributions done by the user as well as a list of open issues for the given user in the following format:
 

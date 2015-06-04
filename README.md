@@ -1,24 +1,7 @@
-Hello!
-====
+# Data Feeder for Widgets
 
-This is a demonstrator for [Sinatra](http://www.sinatrarb.com/) and [Twitter Bootstrap](http://getbootstrap.com/). 
+I use several widgets on OSX using Ubersicht. This repe holds the
+Sinatra app that crunches data from the Github API, as well as provides
+other valuable data for these widgets.
 
-Use it as a boilerplate to start your own apps.
-
-Go!
-===
-
-Download and run sinatra-bootstrap:
-
-    git clone https://github.com/bootstrap-ruby/sinatra-bootstrap
-    
-    cd sinatra-bootstrap
-    bundle install             # To install sinatra
-    
-    bundle exec ruby app.rb    # To run the sample
-	
-Then open [http://localhost:4567/](http://localhost:4567/)
-
-What's next?
-============
-- Try the rerun gem to restart Sinatra automatically when you change source files: https://github.com/alexch/rerun
+Please, [read more here](https://widget-data-feeder.herokuapp.com)

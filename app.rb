@@ -9,15 +9,15 @@ Dir.glob(pattern).each{ |file| require file }
 before { content_type 'application/json' }
 
 helpers do
-  def query(resource, type = nil, to_json = true)
+  def github_query(resource, type = nil, to_json = true)
     type   ||= request.env['PATH_INFO'].split("/").reject{|a| a.empty?}.first
     @query ||= Octokit::Query.new(@params)
 
     data = {error: "no such method implemented!"}
     methods  = [send("#{type}_mapping_for", resource)].flatten
     if methods and methods.any?
-      data     = @query.fetch(resource, methods)
-      data     = data.count > 1 ? data : data[methods.first.to_sym]
+      data = @query.fetch(resource, methods)
+      data = data.count > 1 ? data : data[methods.first.to_sym]
     end
     to_json ? data.to_json : data
   end
@@ -47,23 +47,34 @@ get '/' do
   markdown :root, layout: :layout, layout_engine: :erb
 end
 
-get '/charts/:charts/stats/:stats/lists/:lists' do
+get '/ip' do
+  data    = Hash[request.env.map{|k,v| [k.underscore, v]}]
+  regex   = /^(async\.|rack\.|sinatra\.|server_)/
+  data    = data.reject{|k,v| k =~ regex || v.blank? }
+  as_text = params["format"] =~ /(plain|te?xt|html)/
+  content_type 'text/plain' if as_text
+  data    = params["keys"].split(",").map{|k| data[k.underscore]} if params["keys"]
+  return data.to_json unless as_text
+  data.is_a?(Hash) ? data.map{|k,v| "#{k.upcase}: #{v}"}.join("\n") : data.join("\n")
+end
+
+get '/github/charts/:charts/stats/:stats/lists/:lists' do
   lists  = params["lists"].split(",")
   stats  = params["stats"].split(",")
   charts = params["charts"].split(",")
   data = {stats: {}, lists: {}, charts: {}}
-  stats.each{ |item| data[:stats][item.to_sym]  = query(item, :stats, false) }
-  lists.each{ |item| data[:lists][item.to_sym]  = query(item, :lists, false) }
-  charts.each{|item| data[:charts][item.to_sym] = query(item, :charts, false) }
+  stats.each{ |item| data[:stats][item.to_sym]  = github_query(item, :stats, false) }
+  lists.each{ |item| data[:lists][item.to_sym]  = github_query(item, :lists, false) }
+  charts.each{|item| data[:charts][item.to_sym] = github_query(item, :charts, false) }
   data.to_json
 end
 
-get '/:type/:resource' do
+get '/github/:type/:resource' do
   resource = params["resource"].split(",")
   type     = params["type"].to_sym
   if resource.count > 1
-    Hash[resource.map{|r| [r, query(r, type, false)]}].to_json
+    Hash[resource.map{|r| [r, github_query(r, type, false)]}].to_json
   else
-    query resource.first, type
+    github_query resource.first, type
   end
 end
