@@ -6,7 +6,10 @@ require 'active_support/all'
 
 pattern = File.join(File.dirname(__FILE__), "lib", "**", "*.rb")
 Dir.glob(pattern).each{ |file| require file }
-before { content_type 'application/json' }
+before do
+  headers 'Access-Control-Allow-Origin' => '*'
+  content_type 'application/json'
+end
 
 helpers do
   def github_query(resource, type = nil, to_json = true)
