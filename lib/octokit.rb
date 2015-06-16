@@ -1,5 +1,4 @@
 require "json"
-require "mechanize"
 require "octokit"
 
 class Sawyer::Resource

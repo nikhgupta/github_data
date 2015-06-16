@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'time'
 require 'sinatra'
+require "mechanize"
 require 'rdiscount'
 require 'active_support/all'
 
@@ -59,6 +60,17 @@ get '/ip' do
   data    = params["keys"].split(",").map{|k| data[k.underscore]} if params["keys"]
   return data.to_json unless as_text
   data.is_a?(Hash) ? data.map{|k,v| "#{k.upcase}: #{v}"}.join("\n") : data.join("\n")
+end
+
+get '/twitter/info/:profile' do
+  url  = "https://twitter.com/#{params["profile"]}"
+  page = Mechanize.new{|a| a.user_agent_alias='Mac Safari'}.get url
+  header = page.search(".ProfileHeaderCard").text.gsub(/\n+\s+/, "\n").strip.split("\n")
+  stats  = page.search(".ProfileNav").text.gsub(/\n+\s+/, "\n").strip.split("\n").take(8)
+  stats  = stats.each_slice(2).map{|a| a.reverse.join(" ")}.join(" | ")
+  header[0] = header[0].gsub(/Protected Tweets$/, " - #protected")
+  header[2] = header[2].scan(/.{1,68}/).join("\n")
+  "#{header[1]} (#{header[0]})\n#{header[3]}\n#{header[4]}\n#{stats}\n#{header[2]}"
 end
 
 get '/github/charts/:charts/stats/:stats/lists/:lists' do
