@@ -5,7 +5,7 @@ require 'rdiscount'
 require 'active_support/all'
 
 pattern = File.join(File.dirname(__FILE__), "lib", "**", "*.rb")
-Dir.glob(pattern).each{ |file| require file }
+Dir.glob(pattern).each { |file| require file }
 before do
   headers 'Access-Control-Allow-Origin' => '*'
   content_type 'application/json'
@@ -13,12 +13,12 @@ end
 
 helpers do
   def github_query(resource, type = nil, to_json = true)
-    type   ||= request.env['PATH_INFO'].split("/").reject{|a| a.empty?}.first
+    type   ||= request.env['PATH_INFO'].split("/").reject(&:empty?).first
     @query ||= Octokit::Query.new(@params)
 
-    data = {error: "no such method implemented!"}
+    data = { error: "no such method implemented!" }
     methods  = [send("#{type}_mapping_for", resource)].flatten
-    if methods and methods.any?
+    if methods && methods.any?
       data = @query.fetch(resource, methods)
       data = data.count > 1 ? data : data[methods.first.to_sym]
     end
